@@ -1,0 +1,28 @@
+{
+  "name": "parser-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/dom-parser": "^0.1.1",
+    "@types/node": "^20.11.16",
+    "prettier": "3.2.5",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@types/readline-sync": "^1.4.8",
+    "axios": "^0.27.2",
+    "axios-https-proxy-fix": "^0.17.1",
+    "crypto": "^1.0.1",
+    "dom-parser": "^0.1.6",
+    "playwright": "^1.41.2",
+    "tesseract.js": "^5.0.3",
+    "urldecode": "^1.0.1"
+  }
+}

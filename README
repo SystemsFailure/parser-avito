@@ -1,0 +1,7 @@
+npm install
+
+tsc --downlevelIteration --esModuleInterop  src/main_.ts
+
+node src/main_.js
+
+Ввести название города(Латынь)
