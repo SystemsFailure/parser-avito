@@ -20,37 +20,6 @@ function input_params(): Promise<string> {
     });
   });
 }
-// Это не используем
-// const getActiveProxies = async () => {
-//   const result: any[] = []
-//   for (const item of proxyList) {
-//       const proxy = {
-//           host: item.split('@')[0].split(':')[0],
-//           port: Number(item.split('@')[0].split(':')[1]),
-//           auth: {
-//               username: item.split('@')[1].split(':')[0],
-//               password: item.split('@')[1].split(':')[1],
-//           },
-//       }
-//       try {
-//           await axios.post(
-//               `https://www.avito.ru/krasnodar/kvartiry/prodam`,
-//               {
-//                   proxy: proxy,
-//                   timeout: 30_000,
-//               }
-//           )
-
-//           result.push(proxy)
-//       } catch (err) {
-//           if (err.response && err.response.status !== 403) {
-//               result.push(proxy)
-//           }
-//       }
-//   }
-//   return result
-// }
-
 
 export class AvitoSellParser extends Parser {
     constructor(options: Avito.ParserOptions) {
