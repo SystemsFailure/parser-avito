@@ -109,8 +109,9 @@ var dom_parser_1 = __importDefault(require("dom-parser"));
 var playwright_1 = require("playwright");
 var tesseract_js_1 = require("tesseract.js");
 var axios_https_proxy_fix_1 = __importDefault(require("axios-https-proxy-fix"));
-var proxy_1 = require("./utils/proxy");
 var readline = __importStar(require("readline"));
+var parser_abstract_1 = require("./abstract/parser.abstract");
+// import { proxyList, getRandomProxy } from './utils/proxy';
 function input_params() {
     return new Promise(function (resolve) {
         var rl = readline.createInterface({
@@ -123,82 +124,13 @@ function input_params() {
         });
     });
 }
-var getActiveProxies = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var result, proxyList_1, proxyList_1_1, item, proxy, err_1, e_1_1;
-    var e_1, _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                result = [];
-                _b.label = 1;
-            case 1:
-                _b.trys.push([1, 8, 9, 10]);
-                proxyList_1 = __values(proxy_1.proxyList), proxyList_1_1 = proxyList_1.next();
-                _b.label = 2;
-            case 2:
-                if (!!proxyList_1_1.done) return [3 /*break*/, 7];
-                item = proxyList_1_1.value;
-                proxy = {
-                    host: item.split('@')[0].split(':')[0],
-                    port: Number(item.split('@')[0].split(':')[1]),
-                    auth: {
-                        username: item.split('@')[1].split(':')[0],
-                        password: item.split('@')[1].split(':')[1],
-                    },
-                };
-                _b.label = 3;
-            case 3:
-                _b.trys.push([3, 5, , 6]);
-                return [4 /*yield*/, axios_https_proxy_fix_1.default.post("https://www.avito.ru/krasnodar/kvartiry/prodam", {
-                        proxy: proxy,
-                        timeout: 30000,
-                    })];
-            case 4:
-                _b.sent();
-                result.push(proxy);
-                return [3 /*break*/, 6];
-            case 5:
-                err_1 = _b.sent();
-                if (err_1.response && err_1.response.status !== 403) {
-                    result.push(proxy);
-                }
-                return [3 /*break*/, 6];
-            case 6:
-                proxyList_1_1 = proxyList_1.next();
-                return [3 /*break*/, 2];
-            case 7: return [3 /*break*/, 10];
-            case 8:
-                e_1_1 = _b.sent();
-                e_1 = { error: e_1_1 };
-                return [3 /*break*/, 10];
-            case 9:
-                try {
-                    if (proxyList_1_1 && !proxyList_1_1.done && (_a = proxyList_1.return)) _a.call(proxyList_1);
-                }
-                finally { if (e_1) throw e_1.error; }
-                return [7 /*endfinally*/];
-            case 10: return [2 /*return*/, result];
-        }
-    });
-}); };
-var Parser = /** @class */ (function () {
-    function Parser(options) {
-        this.baseUrl = options.baseUrl;
-        this.timeout = options.timeout;
-        this.timeDelay = options.timeDelay;
-        this.worker = options.worker;
-        this.parser = options.parser;
-        this.cities = options.cities;
-    }
-    return Parser;
-}());
 var AvitoSellParser = /** @class */ (function (_super) {
     __extends(AvitoSellParser, _super);
     function AvitoSellParser(options) {
         return _super.call(this, options) || this;
         // Дополнительная инициализация для вашего парсера
     }
-    AvitoSellParser.prototype.parse = function (url, city) {
+    AvitoSellParser.prototype.parse = function (city) {
         return __awaiter(this, void 0, void 0, function () {
             var city_, error_1;
             return __generator(this, function (_a) {
@@ -206,7 +138,7 @@ var AvitoSellParser = /** @class */ (function (_super) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
                         city_ = this.cities.find(function (el) { return el.link === city; });
-                        return [4 /*yield*/, this.customFetchData(url, city_)];
+                        return [4 /*yield*/, this.customFetchData(city_)];
                     case 1:
                         _a.sent();
                         return [3 /*break*/, 3];
@@ -221,8 +153,8 @@ var AvitoSellParser = /** @class */ (function (_super) {
     };
     AvitoSellParser.prototype.downloadFile = function (itemFullObject, outputObject) {
         return __awaiter(this, void 0, void 0, function () {
-            var images, imagesFiles, _a, _b, _c, index, image, proxies, proxy, response, e_2_1, FullOutputObject;
-            var e_2, _d;
+            var images, imagesFiles, _a, _b, _c, index, image, response, e_1_1, FullOutputObject;
+            var e_1, _d;
             return __generator(this, function (_e) {
                 switch (_e.label) {
                     case 0:
@@ -231,47 +163,44 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         itemFullObject.item.imageUrls.forEach(function (el) { return images.push(el); });
                         _e.label = 1;
                     case 1:
-                        _e.trys.push([1, 7, 8, 9]);
+                        _e.trys.push([1, 6, 7, 8]);
                         _a = __values(images.entries()), _b = _a.next();
                         _e.label = 2;
                     case 2:
-                        if (!!_b.done) return [3 /*break*/, 6];
+                        if (!!_b.done) return [3 /*break*/, 5];
                         _c = __read(_b.value, 2), index = _c[0], image = _c[1];
-                        return [4 /*yield*/, getActiveProxies()];
-                    case 3:
-                        proxies = _e.sent();
-                        proxy = proxies[Math.floor(Math.random() * 10)];
+                        // Прокси не работают
                         // const galleryImageName = crypto.randomUUID() + '.png'
                         if (index === 2) {
                             console.log(index, " : index \n");
-                            return [3 /*break*/, 6];
+                            return [3 /*break*/, 5];
                         }
                         return [4 /*yield*/, (0, axios_https_proxy_fix_1.default)({
                                 method: 'get',
                                 url: image['640x480'],
                                 responseType: 'arraybuffer',
-                                proxy: proxy,
                                 timeout: 30000,
+                                // proxy: getRandomProxy(),
                             })];
-                    case 4:
+                    case 3:
                         response = _e.sent();
                         imagesFiles.push(response.data);
-                        _e.label = 5;
-                    case 5:
+                        _e.label = 4;
+                    case 4:
                         _b = _a.next();
                         return [3 /*break*/, 2];
-                    case 6: return [3 /*break*/, 9];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_1_1 = _e.sent();
+                        e_1 = { error: e_1_1 };
+                        return [3 /*break*/, 8];
                     case 7:
-                        e_2_1 = _e.sent();
-                        e_2 = { error: e_2_1 };
-                        return [3 /*break*/, 9];
-                    case 8:
                         try {
                             if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
                         }
-                        finally { if (e_2) throw e_2.error; }
+                        finally { if (e_1) throw e_1.error; }
                         return [7 /*endfinally*/];
-                    case 9:
+                    case 8:
                         FullOutputObject = Object.assign({}, outputObject, {
                             imageResponseData: imagesFiles,
                             imagesUrls: images
@@ -297,11 +226,11 @@ var AvitoSellParser = /** @class */ (function (_super) {
             });
         });
     };
-    AvitoSellParser.prototype.customFetchData = function (url, city) {
+    AvitoSellParser.prototype.customFetchData = function (city) {
         var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function () {
-            var browser, context, pagePlaywright, url_, firstPageHtml, firstPageDom, navigation, spans, lastSpan, lastPage, page, pageHtml, pageDom, items, items_1, items_1_1, item, links, titleNode, href, itemId, itemHtml, itemDom, phoneItemHtml, phone, avitoImageBuffer, phoneData, err_2, scripts, itemFullObject, aboutBlock, hasFurniture, pledge, commission, _d, _e, depItem, addressArr, _f, addressDistrict, addressStreet, houseNumber, outputObject, fullObject, error_2, e_3_1, error_3;
-            var e_3, _g, e_4, _h;
+            var browser, context, pagePlaywright, url_, firstPageHtml, firstPageDom, navigation, spans, lastSpan, lastPage, page, pageHtml, pageDom, items, items_1, items_1_1, item, links, titleNode, href, itemId, itemHtml, itemDom, phoneItemHtml, phone, avitoImageBuffer, phoneData, err_1, scripts, itemFullObject, aboutBlock, hasFurniture, pledge, commission, _d, _e, depItem, addressArr, _f, addressDistrict, addressStreet, houseNumber, outputObject, fullObject, error_2, e_2_1, error_3;
+            var e_2, _g, e_3, _h;
             var _this = this;
             return __generator(this, function (_j) {
                 switch (_j.label) {
@@ -314,7 +243,7 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         return [4 /*yield*/, context.newPage()];
                     case 3:
                         pagePlaywright = _j.sent();
-                        url_ = url.replace('{city}', city.link);
+                        url_ = this.baseUrl.replace('{city}', city.link);
                         return [4 /*yield*/, pagePlaywright.goto(url_, {
                                 timeout: this.timeout,
                                 waitUntil: 'load',
@@ -334,25 +263,24 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         page = 1;
                         _j.label = 6;
                     case 6:
-                        if (!(page <= lastPage)) return [3 /*break*/, 41];
+                        if (!(page <= lastPage)) return [3 /*break*/, 42];
                         _j.label = 7;
                     case 7:
-                        _j.trys.push([7, 35, 36, 40]);
+                        _j.trys.push([7, 36, 37, 41]);
+                        console.log('start goto');
                         return [4 /*yield*/, pagePlaywright.goto("".concat(url_, "?p=").concat(page), {
                                 timeout: this.timeout,
                                 waitUntil: 'domcontentloaded',
-                            })
-                            // Даем у костра посидеть программке
-                        ];
+                            })];
                     case 8:
                         _j.sent();
+                        console.log('end goto');
                         // Даем у костра посидеть программке
-                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, _this.timeDelay); })
-                            // Здесь получаем контент из предыдушего запроса
-                        ];
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, _this.timeDelay); })];
                     case 9:
                         // Даем у костра посидеть программке
                         _j.sent();
+                        console.log('start promise delay');
                         return [4 /*yield*/, pagePlaywright.content()];
                     case 10:
                         pageHtml = _j.sent();
@@ -360,25 +288,25 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         items = pageDom.getElementsByAttribute('data-marker', 'item');
                         // Завершаем цикл, если объектов нет
                         if (!items || items.length === 0)
-                            return [3 /*break*/, 41];
+                            return [3 /*break*/, 42];
                         _j.label = 11;
                     case 11:
-                        _j.trys.push([11, 32, 33, 34]);
-                        items_1 = (e_3 = void 0, __values(items)), items_1_1 = items_1.next();
+                        _j.trys.push([11, 33, 34, 35]);
+                        items_1 = (e_2 = void 0, __values(items)), items_1_1 = items_1.next();
                         _j.label = 12;
                     case 12:
-                        if (!!items_1_1.done) return [3 /*break*/, 31];
+                        if (!!items_1_1.done) return [3 /*break*/, 32];
                         item = items_1_1.value;
                         _j.label = 13;
                     case 13:
-                        _j.trys.push([13, 29, , 30]);
+                        _j.trys.push([13, 30, , 31]);
                         links = item.getElementsByTagName('a');
                         if (!links)
-                            return [3 /*break*/, 30];
+                            return [3 /*break*/, 31];
                         titleNode = links[0];
                         href = titleNode.getAttribute('href');
                         if (!href)
-                            return [3 /*break*/, 30];
+                            return [3 /*break*/, 31];
                         itemId = Number(item.getAttribute('data-item-id'));
                         // Здесь проверка есть ли объект с данных id в базе
                         // Здесь мы идем заходим на страницу объекта через полученный href
@@ -422,25 +350,27 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         phone = '';
                         _j.label = 19;
                     case 19:
-                        _j.trys.push([19, 22, , 23]);
-                        if (!phoneItemHtml) return [3 /*break*/, 21];
-                        avitoImageBuffer = this.getItemPhone(phoneItemHtml);
-                        return [4 /*yield*/, this.recognizeText(avitoImageBuffer)];
+                        _j.trys.push([19, 23, , 24]);
+                        if (!phoneItemHtml) return [3 /*break*/, 22];
+                        return [4 /*yield*/, this.getItemPhone(phoneItemHtml)];
                     case 20:
+                        avitoImageBuffer = _j.sent();
+                        return [4 /*yield*/, this.recognizeText(avitoImageBuffer)];
+                    case 21:
                         phoneData = _j.sent();
                         phone = phoneData;
-                        _j.label = 21;
-                    case 21: return [3 /*break*/, 23];
-                    case 22:
-                        err_2 = _j.sent();
-                        console.log(err_2);
-                        return [3 /*break*/, 23];
-                    case 23: 
+                        _j.label = 22;
+                    case 22: return [3 /*break*/, 24];
+                    case 23:
+                        err_1 = _j.sent();
+                        console.log(err_1);
+                        return [3 /*break*/, 24];
+                    case 24: 
                     // Даем отдышаться
                     return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, _this.timeDelay); })
                         // Здесь мы пытаемся получить из тега скрипт все данные объекта
                     ];
-                    case 24:
+                    case 25:
                         // Даем отдышаться
                         _j.sent();
                         scripts = itemDom.getElementsByTagName('script');
@@ -448,13 +378,13 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         if (!itemFullObject) {
                             console.log('Нет объекта \n');
                             console.log(itemFullObject);
-                            return [3 /*break*/, 30];
+                            return [3 /*break*/, 31];
                         }
                         // Возможен случай, что объект не той локации, так что делаем проверку
                         if (itemFullObject.item.location.name !== city.name) {
                             console.log('Не совпадает локация \n');
                             console.log(itemFullObject.item.location.name);
-                            return [3 /*break*/, 30];
+                            return [3 /*break*/, 31];
                         }
                         aboutBlock = {
                             objectId: null,
@@ -469,20 +399,20 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.fillObjectId(aboutBlock, itemFullObject)
                             // Если у объекта нету id, то выходим из цикла
                         ];
-                    case 25:
+                    case 26:
                         _j.sent();
                         // Если у объекта нету id, то выходим из цикла
                         if (!aboutBlock.objectId) {
                             console.log('Неверный objectId');
                             console.log(itemFullObject.ga[1]);
                             console.log('\n');
-                            return [3 /*break*/, 30];
+                            return [3 /*break*/, 31];
                         }
                         // Заполняем основной инфой объект
                         return [4 /*yield*/, this.fillObjectBaseInfo(aboutBlock, itemFullObject)
                             // Здесь проверка, есть ли у объекта мебель
                         ];
-                    case 26:
+                    case 27:
                         // Заполняем основной инфой объект
                         _j.sent();
                         hasFurniture = itemFullObject.paramsBlock.items.find(function (el) { return el.attributeId === 118596; });
@@ -494,7 +424,7 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         // Здесь проверяем есть ли коммисия на объект
                         if ((_b = itemFullObject.priceDataDTO) === null || _b === void 0 ? void 0 : _b.depositCommission) {
                             try {
-                                for (_d = (e_4 = void 0, __values(itemFullObject.priceDataDTO.depositCommission
+                                for (_d = (e_3 = void 0, __values(itemFullObject.priceDataDTO.depositCommission
                                     .split(',')
                                     .map(function (el) { return el.trim(); }))), _e = _d.next(); !_e.done; _e = _d.next()) {
                                     depItem = _e.value;
@@ -506,12 +436,12 @@ var AvitoSellParser = /** @class */ (function (_super) {
                                     }
                                 }
                             }
-                            catch (e_4_1) { e_4 = { error: e_4_1 }; }
+                            catch (e_3_1) { e_3 = { error: e_3_1 }; }
                             finally {
                                 try {
                                     if (_e && !_e.done && (_h = _d.return)) _h.call(_d);
                                 }
-                                finally { if (e_4) throw e_4.error; }
+                                finally { if (e_3) throw e_3.error; }
                             }
                         }
                         // Здесь мы пропускаем объект с коммисией (ее нужно перенести на самый вверх после получения объекта из json)
@@ -519,7 +449,7 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         if (commission) {
                             console.log('Объект с комиссией');
                             console.log((_c = itemFullObject.priceDataDTO) === null || _c === void 0 ? void 0 : _c.depositCommission);
-                            return [3 /*break*/, 30];
+                            return [3 /*break*/, 31];
                         }
                         addressArr = itemFullObject.item.address
                             .split(', ')
@@ -536,50 +466,50 @@ var AvitoSellParser = /** @class */ (function (_super) {
                                 addressStreet: addressStreet,
                                 houseNumber: houseNumber,
                             })];
-                    case 27:
+                    case 28:
                         outputObject = _j.sent();
                         return [4 /*yield*/, this.downloadFile(itemFullObject, outputObject)];
-                    case 28:
+                    case 29:
                         fullObject = _j.sent();
                         console.log(fullObject, ' fullObject');
-                        return [3 /*break*/, 30];
-                    case 29:
+                        return [3 /*break*/, 31];
+                    case 30:
                         error_2 = _j.sent();
                         console.log(error_2);
-                        return [3 /*break*/, 30];
-                    case 30:
+                        return [3 /*break*/, 31];
+                    case 31:
                         items_1_1 = items_1.next();
                         return [3 /*break*/, 12];
-                    case 31: return [3 /*break*/, 34];
-                    case 32:
-                        e_3_1 = _j.sent();
-                        e_3 = { error: e_3_1 };
-                        return [3 /*break*/, 34];
+                    case 32: return [3 /*break*/, 35];
                     case 33:
+                        e_2_1 = _j.sent();
+                        e_2 = { error: e_2_1 };
+                        return [3 /*break*/, 35];
+                    case 34:
                         try {
                             if (items_1_1 && !items_1_1.done && (_g = items_1.return)) _g.call(items_1);
                         }
-                        finally { if (e_3) throw e_3.error; }
+                        finally { if (e_2) throw e_2.error; }
                         return [7 /*endfinally*/];
-                    case 34: return [3 /*break*/, 40];
-                    case 35:
+                    case 35: return [3 /*break*/, 41];
+                    case 36:
                         error_3 = _j.sent();
                         console.log(error_3);
-                        return [3 /*break*/, 40];
-                    case 36: return [4 /*yield*/, context.close()];
-                    case 37:
-                        _j.sent();
-                        return [4 /*yield*/, browser.close()];
+                        return [3 /*break*/, 41];
+                    case 37: return [4 /*yield*/, context.close()];
                     case 38:
                         _j.sent();
-                        return [4 /*yield*/, this.worker.terminate()];
+                        return [4 /*yield*/, browser.close()];
                     case 39:
                         _j.sent();
-                        return [7 /*endfinally*/];
+                        return [4 /*yield*/, this.worker.terminate()];
                     case 40:
+                        _j.sent();
+                        return [7 /*endfinally*/];
+                    case 41:
                         page++;
                         return [3 /*break*/, 6];
-                    case 41: 
+                    case 42: 
                     // Возвращаем результат парсинга
                     return [2 /*return*/, {}];
                 }
@@ -602,6 +532,8 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         repairId: aboutBlock.repairId,
                         // regionId: addressRegion.id,
                         // cityId: addressCity.id,
+                        regionId: null,
+                        cityId: null,
                         districtId: addressDistrict === null || addressDistrict === void 0 ? void 0 : addressDistrict.id,
                         streetId: addressStreet === null || addressStreet === void 0 ? void 0 : addressStreet.id,
                         houseNumber: houseNumber,
@@ -610,6 +542,9 @@ var AvitoSellParser = /** @class */ (function (_super) {
                         areaLiving: Number(aboutBlock.areaLiving),
                         areaKitchen: Number(aboutBlock.areaKitchen),
                         pledge: pledge,
+                        furniture: aboutBlock.furniture,
+                        area: aboutBlock.area,
+                        objectId: aboutBlock.objectId,
                         commission: commission,
                         fullObject: JSON.stringify({}),
                         src: "https://www.avito.ru".concat(href),
@@ -775,22 +710,28 @@ var AvitoSellParser = /** @class */ (function (_super) {
         });
     };
     AvitoSellParser.prototype.getItemPhone = function (html) {
-        console.log(html.slice(0, 50), ' : html');
-        var jsonString = html
-            .replace('<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">', '');
-        var cleanedJsonString = jsonString.replace('</pre></body></html>', '');
-        var resultObj;
-        try {
-            resultObj = JSON.parse(cleanedJsonString);
-        }
-        catch (error) {
-            console.error('Ошибка при разборе JSON:', error);
-        }
-        var phoneImageBuffer = Buffer.from(resultObj.anonymImage64.replace(/^data:image\/png;base64,/, ''), 'base64');
-        return phoneImageBuffer;
+        return __awaiter(this, void 0, void 0, function () {
+            var jsonString, cleanedJsonString, resultObj, phoneImageBuffer;
+            return __generator(this, function (_a) {
+                console.log(html.slice(0, 50), ' : html \n');
+                jsonString = html
+                    .replace('<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">', '');
+                console.log(jsonString.slice(0, 200), '\n');
+                cleanedJsonString = jsonString.replace('</pre></body></html>', '');
+                console.log(cleanedJsonString.slice(0, 400), '---------\n');
+                try {
+                    resultObj = JSON.parse(cleanedJsonString);
+                }
+                catch (error) {
+                    console.error('Ошибка при разборе JSON:', error);
+                }
+                phoneImageBuffer = Buffer.from(resultObj.anonymImage64.replace(/^data:image\/png;base64,/, ''), 'base64');
+                return [2 /*return*/, phoneImageBuffer];
+            });
+        });
     };
     return AvitoSellParser;
-}(Parser));
+}(parser_abstract_1.Parser));
 exports.AvitoSellParser = AvitoSellParser;
 function main() {
     return __awaiter(this, void 0, void 0, function () {
@@ -826,7 +767,7 @@ function main() {
                         ]
                     };
                     parser = new AvitoSellParser(options);
-                    return [4 /*yield*/, parser.parse("https://www.avito.ru/{city}/kvartiry/prodam", answer).then(function (result) {
+                    return [4 /*yield*/, parser.parse(answer).then(function (result) {
                             console.log(result);
                         })];
                 case 2:

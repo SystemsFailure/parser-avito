@@ -2,8 +2,10 @@ import DomParser from 'dom-parser';
 import { chromium } from "playwright";
 import { createWorker } from 'tesseract.js';
 import axios from 'axios-https-proxy-fix';
-import { proxyList, getRandomProxy } from './utils/proxy';
 import * as readline from 'readline';
+import { Avito } from './types/avito.namespace';
+import { Parser } from './abstract/parser.abstract';
+// import { proxyList, getRandomProxy } from './utils/proxy';
 
 
 function input_params(): Promise<string> {
@@ -18,107 +20,17 @@ function input_params(): Promise<string> {
     });
   });
 }
-// Это не используем
-// const getActiveProxies = async () => {
-//   const result: any[] = []
-//   for (const item of proxyList) {
-//       const proxy = {
-//           host: item.split('@')[0].split(':')[0],
-//           port: Number(item.split('@')[0].split(':')[1]),
-//           auth: {
-//               username: item.split('@')[1].split(':')[0],
-//               password: item.split('@')[1].split(':')[1],
-//           },
-//       }
-//       try {
-//           await axios.post(
-//               `https://www.avito.ru/krasnodar/kvartiry/prodam`,
-//               {
-//                   proxy: proxy,
-//                   timeout: 30_000,
-//               }
-//           )
-
-//           result.push(proxy)
-//       } catch (err) {
-//           if (err.response && err.response.status !== 403) {
-//               result.push(proxy)
-//           }
-//       }
-//   }
-//   return result
-// }
-
-
-interface ParserOptions {
-    baseUrl: string;
-    timeout: number;
-    timeDelay: any;
-    worker: any;
-    parser: any;
-    cities: ParseAvitoCity[];
-}
-
-export interface AboutBlock {
-  objectId: null | number
-  area: null | number
-  areaLiving: null | number
-  areaKitchen: null | number
-  storey: null | number
-  storeyNumber: null | number
-  repairId: null | number
-  furniture: null | boolean
-}
-
-export type ParseAvitoCity = {
-  region: string
-  name: string
-  link: string
-}
-
-abstract class Parser {
-  protected baseUrl: string;
-  protected timeout: number;
-  protected cities: ParseAvitoCity[];
-  protected timeDelay: any;
-  protected worker: any;
-  protected parser: any;
-
-  constructor(options: ParserOptions) {
-    this.baseUrl = options.baseUrl;
-    this.timeout = options.timeout;
-    this.timeDelay = options.timeDelay;
-    this.worker = options.worker;
-    this.parser = options.parser;
-    this.cities = options.cities;
-  }
-
-  // Абстрактный метод, парсинга
-  abstract parse(url: string, city: string): Promise<any>;
-
-  // метод для загрузки\обработки файлов
-  abstract downloadFile(url: string, array: any[], itemFullObject: any, outputObject: any): Promise<any>;
-
-  // метод для работы с базами данных
-  abstract databaseModeling(model, data): Promise<any>;
-
-  // Метод для проверки доступности источника
-  abstract checkingAvailabilitySource(url: string, config: {}): Promise<any>;
-
-  // Кастомный метод получения данных
-  abstract customFetchData(url: string, city: ParseAvitoCity): Promise<any>;
-}
 
 export class AvitoSellParser extends Parser {
-    constructor(options: ParserOptions) {
+    constructor(options: Avito.ParserOptions) {
         super(options);
         // Дополнительная инициализация для вашего парсера
     }
     
-    async parse(url: string, city: string): Promise<any> {
+    async parse(city: string): Promise<any> {
         try {
             const city_ = this.cities.find((el) => el.link === city)!
-            await this.customFetchData(url, city_);
+            await this.customFetchData(city_);
         } catch (error) {
             console.error('Parsing failed:', error);
         }
@@ -171,7 +83,7 @@ export class AvitoSellParser extends Parser {
         throw new Error("Method not realized.");
     }
 
-    async customFetchData(url: string, city: ParseAvitoCity): Promise<any> {
+    async customFetchData(city: Avito.ParseAvitoCity): Promise<any> {
         // код для получения данных по заданному URL
         // Например, используя axios или fetch или playweight
 
@@ -179,7 +91,7 @@ export class AvitoSellParser extends Parser {
         const context = await browser.newContext()
         const pagePlaywright = await context.newPage()
 
-        const url_ = url.replace('{city}', city.link)
+        const url_ = this.baseUrl.replace('{city}', city.link)
         
         await pagePlaywright.goto(url_, {
             timeout: this.timeout,
@@ -201,14 +113,16 @@ export class AvitoSellParser extends Parser {
         // Начало обхода всех объектов на сайте
         for (let page = 1; page <= lastPage; page++) {
             try {
+                console.log('start goto')
                 await pagePlaywright.goto(`${url_}?p=${page}`, {
                     timeout: this.timeout,
                     waitUntil: 'domcontentloaded',
                 })
-
+                console.log('end goto')
                 // Даем у костра посидеть программке
                 await new Promise((resolve) => setTimeout(resolve, this.timeDelay))
-        
+                console.log('start promise delay')
+    
                 // Здесь получаем контент из предыдушего запроса
                 const pageHtml = await pagePlaywright.content()
                 const pageDom = this.parser.parseFromString(pageHtml)
@@ -260,7 +174,7 @@ export class AvitoSellParser extends Parser {
                         try {
                             // Здесь под вопросом, если нету номера или т.п, то пропускать ли элемент?
                             if(phoneItemHtml) {
-                                const avitoImageBuffer: Buffer = this.getItemPhone(phoneItemHtml)
+                                const avitoImageBuffer: Buffer = await this.getItemPhone(phoneItemHtml)
                                 const phoneData: string = await this.recognizeText(avitoImageBuffer)
                                 phone = phoneData
                             } 
@@ -289,7 +203,7 @@ export class AvitoSellParser extends Parser {
                             continue
                         }
             
-                        const aboutBlock: AboutBlock = {
+                        const aboutBlock: Avito.AboutBlock = {
                             objectId: null,
                             area: null,
                             areaLiving: null,
@@ -400,7 +314,7 @@ export class AvitoSellParser extends Parser {
           addressDistrict,
           addressStreet,
         }
-      ) {
+      ) : Promise<Avito.RentObject> {
         return {
           parseSourceId: 1,
           foreignId: itemFullObject.item.id,
@@ -413,6 +327,8 @@ export class AvitoSellParser extends Parser {
           repairId: aboutBlock.repairId!,
           // regionId: addressRegion.id,
           // cityId: addressCity.id,
+            regionId: null,
+            cityId: null,
           districtId: addressDistrict?.id,
           streetId: addressStreet?.id,
           houseNumber: houseNumber,
@@ -421,6 +337,9 @@ export class AvitoSellParser extends Parser {
           areaLiving: Number(aboutBlock.areaLiving),
           areaKitchen: Number(aboutBlock.areaKitchen),
           pledge: pledge,
+          furniture: aboutBlock.furniture,
+          area: aboutBlock.area,
+          objectId: aboutBlock.objectId,
           commission: commission,
           fullObject: JSON.stringify({}),
           src: `https://www.avito.ru${href}`,
@@ -461,7 +380,7 @@ export class AvitoSellParser extends Parser {
         }
     }
   
-    protected async fillObjectBaseInfo(aboutBlock: AboutBlock, itemFullObject: any) : Promise<void> {
+    protected async fillObjectBaseInfo(aboutBlock: Avito.AboutBlock, itemFullObject: any) : Promise<void> {
       aboutBlock.area =
           Number(itemFullObject.ga[1]?.area?.replace(/\D/g, '')) || null
       aboutBlock.areaKitchen =
@@ -500,7 +419,7 @@ export class AvitoSellParser extends Parser {
       }
     }
   
-    protected async fillObjectId(aboutBlock: AboutBlock, itemFullObject: any) {
+    protected async fillObjectId(aboutBlock: Avito.AboutBlock, itemFullObject: any) {
       switch (true) {
         case Number(itemFullObject.ga[1].categoryId) === 24 &&
             Number(itemFullObject.ga[1].rooms) >= 5:
@@ -592,14 +511,17 @@ export class AvitoSellParser extends Parser {
       return text;
     }
   
-    protected getItemPhone(html: string) {
-        console.log(html.slice(0, 50), ' : html')
+    protected async getItemPhone(html: string) {
+        console.log(html.slice(0, 50), ' : html \n')
+        // Здесь желательно проверять, ограничили ли ip прокси и тд
         const jsonString = html
         .replace(
             '<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">',
             ''
         );
+        console.log(jsonString.slice(0, 200), '\n')
         const cleanedJsonString = jsonString.replace('</pre></body></html>', '');
+        console.log(cleanedJsonString.slice(0, 400), '---------\n')
     
         let resultObj;
         try {
@@ -619,7 +541,7 @@ async function main() {
     // Создание экземпляра парсера и вызов его метода parse()
     const answer: string = await input_params();
     console.log(`Вы ввели: ${answer}`, '\n');
-    const options: ParserOptions = {
+    const options: Avito.ParserOptions = {
         baseUrl: "https://www.avito.ru/{city}/kvartiry/prodam",
         timeout: 0,
         timeDelay: 3_000,
@@ -645,7 +567,7 @@ async function main() {
     };
     
     const parser = new AvitoSellParser(options);
-    await parser.parse("https://www.avito.ru/{city}/kvartiry/prodam", answer).then((result) => {
+    await parser.parse(answer).then((result) => {
         console.log(result);
     });
 }
