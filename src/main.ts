@@ -113,14 +113,16 @@ export class AvitoSellParser extends Parser {
         // Начало обхода всех объектов на сайте
         for (let page = 1; page <= lastPage; page++) {
             try {
+                console.log('start goto')
                 await pagePlaywright.goto(`${url_}?p=${page}`, {
                     timeout: this.timeout,
                     waitUntil: 'domcontentloaded',
                 })
-
+                console.log('end goto')
                 // Даем у костра посидеть программке
                 await new Promise((resolve) => setTimeout(resolve, this.timeDelay))
-        
+                console.log('start promise delay')
+    
                 // Здесь получаем контент из предыдушего запроса
                 const pageHtml = await pagePlaywright.content()
                 const pageDom = this.parser.parseFromString(pageHtml)
@@ -172,7 +174,7 @@ export class AvitoSellParser extends Parser {
                         try {
                             // Здесь под вопросом, если нету номера или т.п, то пропускать ли элемент?
                             if(phoneItemHtml) {
-                                const avitoImageBuffer: Buffer = this.getItemPhone(phoneItemHtml)
+                                const avitoImageBuffer: Buffer = await this.getItemPhone(phoneItemHtml)
                                 const phoneData: string = await this.recognizeText(avitoImageBuffer)
                                 phone = phoneData
                             } 
@@ -509,14 +511,17 @@ export class AvitoSellParser extends Parser {
       return text;
     }
   
-    protected getItemPhone(html: string) {
-        console.log(html.slice(0, 50), ' : html')
+    protected async getItemPhone(html: string) {
+        console.log(html.slice(0, 50), ' : html \n')
+        // Здесь желательно проверять, ограничили ли ip прокси и тд
         const jsonString = html
         .replace(
             '<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">',
             ''
         );
+        console.log(jsonString.slice(0, 200), '\n')
         const cleanedJsonString = jsonString.replace('</pre></body></html>', '');
+        console.log(cleanedJsonString.slice(0, 400), '---------\n')
     
         let resultObj;
         try {
